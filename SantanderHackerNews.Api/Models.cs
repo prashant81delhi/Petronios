@@ -8,7 +8,6 @@ public sealed class HackerNewsOptions
     [Required, Url] public string BaseUrl { get; set; } = "https://hacker-news.firebaseio.com/v0/";
     [Range(1, 100)] public int StoryCount { get; set; } = 20;
     [Range(1, 3600)] public int CacheSeconds { get; set; } = 60;
-    [Range(1, 3600)] public int StaleCacheSeconds { get; set; } = 300;
     [Range(1, 120)] public int TimeoutSeconds { get; set; } = 10;
     [Range(1, 100)] public int MaxConcurrentItemRequests { get; set; } = 8;
     [Range(1, 100)] public int OutboundRequestsPerSecond { get; set; } = 20;

@@ -1,6 +1,6 @@
 @SantanderHackerNews.Api_HostAddress = http://localhost:5233
 
-GET {{SantanderHackerNews.Api_HostAddress}}/weatherforecast/
+GET {{SantanderHackerNews.Api_HostAddress}}/api/stories/best?n=10
 Accept: application/json
 
 ###

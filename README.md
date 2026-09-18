@@ -66,7 +66,6 @@ $env:Cache__Provider = "Redis"
 $env:ConnectionStrings__Redis = "localhost:6379"
 $env:HackerNews__StoryCount = "20"
 $env:HackerNews__CacheSeconds = "60"
-$env:HackerNews__StaleCacheSeconds = "300"
 $env:HackerNews__TimeoutSeconds = "10"
 $env:HackerNews__MaxConcurrentItemRequests = "8"
 $env:HackerNews__OutboundRequestsPerSecond = "20"
@@ -83,7 +82,6 @@ The available settings are:
 | `HackerNews__BaseUrl` | `https://hacker-news.firebaseio.com/v0/` | Hacker News API base URL |
 | `HackerNews__StoryCount` | `20` | Number of stories refreshed by the background service |
 | `HackerNews__CacheSeconds` | `60` | Fresh cache lifetime |
-| `HackerNews__StaleCacheSeconds` | `300` | Stale-cache configuration value |
 | `HackerNews__TimeoutSeconds` | `10` | Upstream HTTP client timeout |
 | `HackerNews__MaxConcurrentItemRequests` | `8` | Maximum concurrent story-item requests |
 | `HackerNews__OutboundRequestsPerSecond` | `20` | Outbound request-rate limit |
@@ -136,7 +134,7 @@ execute the OpenAPI operations interactively.
 Run the full test suite from the repository root:
 
 ```bash
-dotnet test
+dotnet test --configuration Release
 ```
 
 Tests use an in-memory distributed cache and fake HTTP handlers, so they do not

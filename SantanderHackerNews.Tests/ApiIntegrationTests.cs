@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -25,6 +26,14 @@ public sealed class ApiIntegrationTests : IClassFixture<ApiFactory>
 
         response.EnsureSuccessStatusCode();
         Assert.Equal("Healthy", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Best_stories_endpoint_rejects_an_invalid_count()
+    {
+        var response = await client.GetAsync("/api/stories/best?n=0");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 }
 
