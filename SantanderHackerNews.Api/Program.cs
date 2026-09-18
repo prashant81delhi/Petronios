@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProblemDetails();
+builder.Services.AddHealthChecks();
 builder.Services.AddOptions<HackerNewsOptions>().Bind(builder.Configuration.GetSection("HackerNews")).ValidateDataAnnotations().ValidateOnStart();
 builder.Services.AddTransient<OutboundBulkheadHandler>();
 builder.Services.AddTransient<OutboundRateLimitHandler>();
@@ -41,9 +42,26 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 app.UseExceptionHandler();
+app.Use(async (context, next) =>
+{
+    var requestId = context.Request.Headers["X-Request-Id"].FirstOrDefault();
+    if (string.IsNullOrWhiteSpace(requestId))
+        requestId = context.TraceIdentifier;
+
+    context.Response.Headers["X-Request-Id"] = requestId;
+    using (app.Logger.BeginScope(new Dictionary<string, object> { ["RequestId"] = requestId }))
+    {
+        await next();
+    }
+});
 app.UseRateLimiter();
 app.UseSwagger();
 app.UseSwaggerUI();
+app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = _ => false
+});
+app.MapHealthChecks("/health/ready");
 app.MapControllers().RequireRateLimiting("inbound");
 app.Run();
 

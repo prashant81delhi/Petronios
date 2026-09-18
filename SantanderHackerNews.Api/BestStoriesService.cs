@@ -50,7 +50,14 @@ public sealed class BestStoriesService(
                             item.Time is null ? null : DateTimeOffset.FromUnixTimeSeconds(item.Time.Value),
                             item.Score ?? 0, item.Descendants ?? 0));
                 }
-                catch (Exception ex) { logger.LogWarning(ex, "Unable to load Hacker News item {Id}", id); }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    logger.LogWarning("Hacker News item request timed out for {Id}", id);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Unable to load Hacker News item {Id}", id);
+                }
                 finally { gate.Release(); }
             });
             await Task.WhenAll(tasks);

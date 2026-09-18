@@ -17,6 +17,15 @@ public sealed class ApiIntegrationTests : IClassFixture<ApiFactory>
         response.EnsureSuccessStatusCode();
         Assert.Equal("application/json; charset=utf-8", response.Content.Headers.ContentType?.ToString());
     }
+
+    [Fact]
+    public async Task Liveness_endpoint_is_not_rate_limited()
+    {
+        var response = await client.GetAsync("/health/live");
+
+        response.EnsureSuccessStatusCode();
+        Assert.Equal("Healthy", await response.Content.ReadAsStringAsync());
+    }
 }
 
 public sealed class ApiFactory : WebApplicationFactory<Program>

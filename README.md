@@ -117,6 +117,14 @@ The endpoint is protected by an inbound fixed-window rate limit of 60 requests
 per client IP per minute. A rejected request returns HTTP 429, and an invalid
 `n` returns HTTP 400.
 
+Operational endpoints are intentionally outside the client rate limit:
+
+- `GET /health/live` checks that the process is running.
+- `GET /health/ready` reports whether configured application health checks pass.
+
+Each response includes an `X-Request-Id` header. Send the same header from a
+caller to correlate its request with structured application logs.
+
 ## Swagger
 
 With the API running, open
@@ -133,6 +141,23 @@ dotnet test
 
 Tests use an in-memory distributed cache and fake HTTP handlers, so they do not
 require Redis, Docker, or internet access.
+
+## Docker and CI
+
+Build and run the API with Redis using Docker Compose:
+
+```bash
+docker compose up --build
+curl http://localhost:8080/health/ready
+curl "http://localhost:8080/api/stories/best?n=10"
+```
+
+The multi-stage `Dockerfile` publishes a non-root ASP.NET Core image. The
+GitHub Actions workflow restores, builds, tests with coverage collection, and
+builds the container image for every pull request and push to `main`.
+
+See [docs/architecture.md](docs/architecture.md) for service boundaries,
+resilience decisions, scaling, persistence trade-offs, and testing strategy.
 
 ## Troubleshooting
 
