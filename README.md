@@ -1,38 +1,34 @@
 # Santander Hacker News API
 
 Production-oriented ASP.NET Core 8 API exposing Hacker News best stories. The
-API uses Redis for distributed caching and the Hacker News Firebase API as its
-upstream data source.
+API uses an in-process cache by default and can use Redis for distributed
+caching when explicitly configured. Hacker News Firebase is the upstream data
+source.
 
 ## Prerequisites
 
 Install the following tools before starting:
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - Git, to clone the repository
-
-Verify the .NET SDK and Docker Desktop installation:
 
 ```bash
 dotnet --version
-docker --version
-docker info
 ```
 
-The SDK version must be 8.x. `docker info` must complete successfully; if it
-cannot connect to the Docker daemon, start Docker Desktop and try again.
+The SDK version must be 8.x. Redis and Docker are optional for the default
+local-cache mode.
 
-## Start Redis
+## Optional: start Redis
 
-Start a Redis 7 container before running the API:
+To use Redis instead of the default in-process cache, start a Redis 7
+container:
 
 ```bash
 docker run -d --name santander-redis -p 6379:6379 redis:7-alpine
 ```
 
-This publishes Redis on `localhost:6379`, which is the connection string used
-by the API by default. Verify that the container is running and accepting
+This publishes Redis on `localhost:6379`. Verify that the container is running and accepting
 connections:
 
 ```bash
@@ -66,6 +62,7 @@ and can be overridden with environment variables using the standard ASP.NET
 Core double-underscore separator. For example:
 
 ```powershell
+$env:Cache__Provider = "Redis"
 $env:ConnectionStrings__Redis = "localhost:6379"
 $env:HackerNews__StoryCount = "20"
 $env:HackerNews__CacheSeconds = "60"
@@ -81,7 +78,8 @@ The available settings are:
 
 | Setting | Default | Purpose |
 | --- | --- | --- |
-| `ConnectionStrings__Redis` | `localhost:6379` | Redis connection string |
+| `Cache__Provider` | `Memory` | Cache backend: `Memory` or `Redis` |
+| `ConnectionStrings__Redis` | *(not set)* | Redis connection string when `Cache__Provider=Redis` |
 | `HackerNews__BaseUrl` | `https://hacker-news.firebaseio.com/v0/` | Hacker News API base URL |
 | `HackerNews__StoryCount` | `20` | Number of stories refreshed by the background service |
 | `HackerNews__CacheSeconds` | `60` | Fresh cache lifetime |
@@ -138,16 +136,22 @@ require Redis, Docker, or internet access.
 
 ## Troubleshooting
 
-### Docker Desktop is unavailable
+### Running without Redis
 
-Start Docker Desktop and wait until `docker info` succeeds. If Docker cannot
-be used on the machine, install or run a Redis-compatible server locally and
-set `ConnectionStrings__Redis` to its host and port before starting the API.
-The API currently expects Redis at startup/runtime; without a reachable Redis
-instance, API requests that access the cache will fail. The test suite remains
-available without Redis because it replaces Redis with an in-memory cache.
+No Redis installation or configuration is needed for local development. The
+default `Cache:Provider` is `Memory`, which stores cache entries in the API
+process. Entries are lost when the process stops and are not shared between
+instances.
 
 ### Redis is not reachable
+
+Redis is only used when `Cache:Provider=Redis`. If Redis is not reachable,
+switch back to local mode:
+
+```powershell
+$env:Cache__Provider = "Memory"
+dotnet run --project SantanderHackerNews.Api
+```
 
 Check the container and its logs:
 
@@ -158,8 +162,8 @@ docker start santander-redis
 docker exec santander-redis redis-cli ping
 ```
 
-Confirm that the API's `ConnectionStrings__Redis` value matches the published
-host and port. If port 6379 is already in use, publish another host port and
+Confirm that `Cache__Provider` is `Redis` and the API's
+`ConnectionStrings__Redis` value matches the published host and port. If port 6379 is already in use, publish another host port and
 use the matching value, for example:
 
 ```bash
@@ -168,6 +172,7 @@ docker run -d --name santander-redis -p 6380:6379 redis:7-alpine
 
 ```powershell
 $env:ConnectionStrings__Redis = "localhost:6380"
+$env:Cache__Provider = "Redis"
 dotnet run --project SantanderHackerNews.Api
 ```
 
@@ -182,7 +187,7 @@ configurable outbound request-rate limiter prevents upstream bursts.
 
 ## Shutdown and cleanup
 
-Stop the API with `Ctrl+C`. Stop Redis when it is no longer needed:
+Stop the API with `Ctrl+C`. If Redis was started, stop it when it is no longer needed:
 
 ```bash
 docker stop santander-redis

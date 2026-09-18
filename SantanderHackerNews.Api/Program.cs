@@ -1,6 +1,5 @@
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.Extensions.Caching.Distributed;
 using SantanderHackerNews.Api;
 using Polly;
 using Microsoft.Extensions.Options;
@@ -26,7 +25,7 @@ builder.Services.AddHttpClient<IHackerNewsClient, HackerNewsClient>((sp, client)
     options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(30);
     options.CircuitBreaker.FailureRatio = 0.5;
 });
-builder.Services.AddStackExchangeRedisCache(options => options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379");
+builder.Services.AddConfiguredCache(builder.Configuration);
 builder.Services.AddSingleton<BestStoriesService>();
 builder.Services.AddHostedService<CacheRefreshService>();
 builder.Services.AddRateLimiter(options =>
