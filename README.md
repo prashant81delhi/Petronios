@@ -16,9 +16,11 @@ Configuration is in `appsettings.json` and supports environment overrides such a
 `ConnectionStrings__Redis`.
 
 Redis provides distributed caching. `IHttpClientFactory` uses standard resilience policies
-(timeouts, exponential jittered retry, circuit breaker), while bounded concurrent item requests
-provide outbound bulkhead protection. The service coalesces concurrent refreshes and runs a bounded
-periodic background refresh. ASP.NET Core fixed-window inbound rate limiting protects the endpoint.
+(timeouts, exponential jittered retry honoring upstream `Retry-After` where supplied, and circuit
+breaker), while bounded concurrent item requests provide outbound bulkhead protection and a
+configurable outbound request-rate limiter prevents upstream bursts. The service coalesces concurrent
+refreshes and runs a bounded periodic background refresh. ASP.NET Core fixed-window inbound rate
+limiting protects the endpoint.
 Stories are fetched and ranked by score; `uri` is the Hacker News `url` and is null when the
 upstream story has no URL. `time` is serialized as UTC ISO-8601 and `commentCount` uses
 Hacker News `descendants`.

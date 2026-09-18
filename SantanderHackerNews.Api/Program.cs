@@ -9,13 +9,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProblemDetails();
 builder.Services.AddOptions<HackerNewsOptions>().Bind(builder.Configuration.GetSection("HackerNews")).ValidateDataAnnotations().ValidateOnStart();
 builder.Services.AddTransient<OutboundBulkheadHandler>();
+builder.Services.AddTransient<OutboundRateLimitHandler>();
 builder.Services.AddHttpClient<IHackerNewsClient, HackerNewsClient>((sp, client) =>
 {
     var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<HackerNewsOptions>>().Value;
     client.BaseAddress = new Uri(options.BaseUrl);
     client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
     client.DefaultRequestHeaders.UserAgent.ParseAdd("SantanderHackerNews/1.0");
-}).AddHttpMessageHandler<OutboundBulkheadHandler>().AddStandardResilienceHandler(options =>
+}).AddHttpMessageHandler<OutboundRateLimitHandler>().AddHttpMessageHandler<OutboundBulkheadHandler>().AddStandardResilienceHandler(options =>
 {
     options.Retry.MaxRetryAttempts = 3;
     options.Retry.BackoffType = DelayBackoffType.Exponential;

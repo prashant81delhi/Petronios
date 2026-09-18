@@ -11,6 +11,7 @@ public sealed class HackerNewsOptions
     [Range(1, 3600)] public int StaleCacheSeconds { get; set; } = 300;
     [Range(1, 120)] public int TimeoutSeconds { get; set; } = 10;
     [Range(1, 100)] public int MaxConcurrentItemRequests { get; set; } = 8;
+    [Range(1, 100)] public int OutboundRequestsPerSecond { get; set; } = 20;
     public int RefreshIntervalSeconds { get; set; } = 30;
 }
 
